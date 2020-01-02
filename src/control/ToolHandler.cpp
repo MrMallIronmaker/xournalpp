@@ -135,6 +135,37 @@ auto ToolHandler::getEraserType() -> EraserType
 	return this->eraserType;
 }
 
+auto ToolHandler::getHilighterType() -> HilighterType
+{
+	return this->hilighterType;
+}
+
+void ToolHandler::setHilighterType(HilighterType hilighterType)
+{
+	this->hilighterType = hilighterType;
+	hilighterTypeChanged();
+}
+
+void ToolHandler::hilighterTypeChanged()
+{
+	if (this->actionHandler == nullptr)
+	{
+		return;
+	}
+
+	switch (this->hilighterType)
+	{
+	case HILIGHTER_TYPE_TRANSLUCENT:
+		this->actionHandler->fireActionSelected(GROUP_HILIGHTER_MODE, ACTION_TOOL_HILIGHTER_TRANSLUCENT);
+		break;
+
+	case HILIGHTER_TYPE_DEFAULT:
+	default:
+		this->actionHandler->fireActionSelected(GROUP_HILIGHTER_MODE, ACTION_TOOL_HILIGHTER_STANDARD);
+		break;
+	}
+}
+
 void ToolHandler::selectTool(ToolType type, bool fireToolChanged)
 {
 	if (type < 1 || type > TOOL_COUNT)

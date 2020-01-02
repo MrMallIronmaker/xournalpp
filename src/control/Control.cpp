@@ -591,6 +591,14 @@ void Control::actionPerformed(ActionType type, ActionGroup group, GdkEvent* even
 			selectTool(TOOL_HILIGHTER);
 		}
 		break;
+
+	case ACTION_TOOL_HILIGHTER_STANDARD:
+		if (enabled)
+		{
+			toolHandler->setHilighterType(HILIGHTER_TYPE_DEFAULT);
+		}
+		break;
+
 	case ACTION_TOOL_TEXT:
 		clearSelection();
 		if (enabled)

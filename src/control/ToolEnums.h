@@ -93,6 +93,15 @@ enum EraserType
 string eraserTypeToString(EraserType type);
 EraserType eraserTypeFromString(const string& type);
 
+enum HilighterType
+{
+	HILIGHTER_TYPE_NONE				= 0,
+	HILIGHTER_TYPE_DEFAULT,
+	HILIGHTER_TYPE_TRANSLUCENT,
+};
+string hilighterTypeToString(HilighterType type);
+HilighterType hilighterTypeFromString(const string& type);
+
 
 enum ToolCapabilities
 {

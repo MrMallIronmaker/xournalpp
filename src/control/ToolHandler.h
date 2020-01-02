@@ -88,6 +88,10 @@ public:
 	void setHilighterFill(int alpha);
 	int getHilighterFill();
 
+	HilighterType getHilighterType();
+	void setHilighterType(HilighterType hilighterType);
+	void hilighterTypeChanged();
+
 	void selectTool(ToolType type, bool fireToolChanged = true);
 	ToolType getToolType();
 	void fireToolChanged();
@@ -135,6 +139,8 @@ private:
 
 	EraserType eraserType = ERASER_TYPE_DEFAULT;
 
+	HilighterType hilighterType = HILIGHTER_TYPE_DEFAULT;
+
 	/**
 	 * If a color is selected, it may be in the list,
 	 * so its a "predefined" color for us, but may it is
@@ -147,4 +153,5 @@ private:
 	ActionHandler* actionHandler = nullptr;
 
 	Settings* settings = nullptr;
+
 };
