@@ -1,44 +1,36 @@
 #include "StrokeHandler.h"
 
+#include <cmath>
+
+#include <gdk/gdk.h>
+
 #include "control/Control.h"
 #include "control/layer/LayerController.h"
 #include "control/settings/Settings.h"
 #include "control/shaperecognizer/ShapeRecognizerResult.h"
 #include "gui/PageView.h"
 #include "gui/XournalView.h"
-#include <cmath>
 #include "undo/InsertUndoAction.h"
 #include "undo/RecognizerUndoAction.h"
-
-#include "config-features.h"
 #include "util/cpp14memory.h"
 
-#include <gdk/gdk.h>
-#include <cmath>
+#include "config-features.h"
 
 
 guint32 StrokeHandler::lastStrokeTime;  // persist for next stroke
 
 
-StrokeHandler::StrokeHandler(XournalView* xournal, XojPageView* redrawable, const PageRef& page)
- : InputHandler(xournal, redrawable, page)
- , surfMask(nullptr)
- , crMask(nullptr)
- , reco(nullptr)
-{
-}
+StrokeHandler::StrokeHandler(XournalView* xournal, XojPageView* redrawable, const PageRef& page):
+        InputHandler(xournal, redrawable, page), surfMask(nullptr), crMask(nullptr), reco(nullptr) {}
 
-StrokeHandler::~StrokeHandler()
-{
+StrokeHandler::~StrokeHandler() {
 	destroySurface();
 	delete reco;
 	reco = nullptr;
 }
 
-void StrokeHandler::draw(cairo_t* cr)
-{
-	if (!stroke)
-	{
+void StrokeHandler::draw(cairo_t* cr) {
+    if (!stroke) {
 		return;
 	}
 
@@ -53,16 +45,11 @@ void StrokeHandler::draw(cairo_t* cr)
 }
 
 
-auto StrokeHandler::onKeyEvent(GdkEventKey* event) -> bool
-{
-	return false;
-}
+auto StrokeHandler::onKeyEvent(GdkEventKey* event) -> bool { return false; }
 
 
-auto StrokeHandler::onMotionNotifyEvent(const PositionInputData& pos) -> bool
-{
-	if (!stroke)
-	{
+auto StrokeHandler::onMotionNotifyEvent(const PositionInputData& pos) -> bool {
+    if (!stroke) {
 		return false;
 	}
 
@@ -73,39 +60,32 @@ auto StrokeHandler::onMotionNotifyEvent(const PositionInputData& pos) -> bool
 
 	Point currentPoint(x, y);
 
-	if (pointCount > 0)
-	{
-		if (!validMotion(currentPoint, stroke->getPoint(pointCount - 1)))
-		{
+    if (pointCount > 0) {
+        if (!validMotion(currentPoint, stroke->getPoint(pointCount - 1))) {
 			return true;
 		}
 	}
 
-	if (Point::NO_PRESSURE != pos.pressure && stroke->getToolType() == STROKE_TOOL_PEN)
-	{
+    if (Point::NO_PRESSURE != pos.pressure && stroke->getToolType() == STROKE_TOOL_PEN) {
 		stroke->setLastPressure(pos.pressure * stroke->getWidth());
 	}
 
 	stroke->addPoint(currentPoint);
 
 	if ((stroke->getFill() != -1 || stroke->getLineStyle().hasDashes()) &&
-	    !(stroke->getFill() != -1 && stroke->getToolType() == STROKE_TOOL_HIGHLIGHTER))
-	{
+        !(stroke->getFill() != -1 && stroke->getToolType() == STROKE_TOOL_HIGHLIGHTER)) {
 		// Clear surface
 
 		// for debugging purposes
 		// cairo_set_source_rgba(crMask, 1, 0, 0, 1);
 		cairo_set_source_rgba(crMask, 0, 0, 0, 0);
-		cairo_rectangle(
-		        crMask, 0, 0, cairo_image_surface_get_width(surfMask), cairo_image_surface_get_height(surfMask));
+        cairo_rectangle(crMask, 0, 0, cairo_image_surface_get_width(surfMask),
+                        cairo_image_surface_get_height(surfMask));
 		cairo_fill(crMask);
 
 		view.drawStroke(crMask, stroke, 0, 1, true, true);
-	}
-	else
-	{
-		if (pointCount > 0)
-		{
+    } else {
+        if (pointCount > 0) {
 			Point prevPoint(stroke->getPoint(pointCount - 1));
 
 			Stroke lastSegment;
@@ -123,18 +103,14 @@ auto StrokeHandler::onMotionNotifyEvent(const PositionInputData& pos) -> bool
 
 	const double w = stroke->getWidth();
 
-	this->redrawable->repaintRect(stroke->getX() - w,
-	                              stroke->getY() - w,
-	                              stroke->getElementWidth() + 2 * w,
+    this->redrawable->repaintRect(stroke->getX() - w, stroke->getY() - w, stroke->getElementWidth() + 2 * w,
 	                              stroke->getElementHeight() + 2 * w);
 
 	return true;
 }
 
-void StrokeHandler::onButtonReleaseEvent(const PositionInputData& pos)
-{
-	if (!stroke)
-	{
+void StrokeHandler::onButtonReleaseEvent(const PositionInputData& pos) {
+    if (!stroke) {
 		return;
 	}
 
@@ -156,15 +132,11 @@ void StrokeHandler::onButtonReleaseEvent(const PositionInputData& pos)
 		                    pow(xournal->getZoom(), 2);
 
 		if (lengthSqrd < pow((strokeFilterIgnoreLength * dpmm), 2) &&
-		    pos.timestamp - this->startStrokeTime < strokeFilterIgnoreTime)
-		{
-			if (pos.timestamp - StrokeHandler::lastStrokeTime > strokeFilterSuccessiveTime)
-			{
+            pos.timestamp - this->startStrokeTime < strokeFilterIgnoreTime) {
+            if (pos.timestamp - StrokeHandler::lastStrokeTime > strokeFilterSuccessiveTime) {
 				// stroke not being added to layer... delete here but clear first!
 
-				this->redrawable->rerenderRect(stroke->getX(),
-				                               stroke->getY(),
-				                               stroke->getElementWidth(),
+                this->redrawable->rerenderRect(stroke->getX(), stroke->getY(), stroke->getElementWidth(),
 				                               stroke->getElementHeight());  // clear onMotionNotifyEvent drawing //!
 
 				delete stroke;
@@ -182,8 +154,7 @@ void StrokeHandler::onButtonReleaseEvent(const PositionInputData& pos)
 	// Backward compatibility and also easier to handle for me;-)
 	// I cannot draw a line with one point, to draw a visible line I need two points,
 	// twice the same Point is also OK
-	if (auto const& pv = stroke->getPointVector(); pv.size() == 1)
-	{
+    if (auto const& pv = stroke->getPointVector(); pv.size() == 1) {
 		stroke->addPoint(pv.front());
 		// Todo: check if the following is the reason for a bug, that single points have no pressure:
 		// No pressure sensitivity,
@@ -202,17 +173,14 @@ void StrokeHandler::onButtonReleaseEvent(const PositionInputData& pos)
 
 	ToolHandler* h = control->getToolHandler();
 
-	if (h->getDrawingType() == DRAWING_TYPE_STROKE_RECOGNIZER)
-	{
-		if (reco == nullptr)
-		{
+    if (h->getDrawingType() == DRAWING_TYPE_STROKE_RECOGNIZER) {
+        if (reco == nullptr) {
 			reco = new ShapeRecognizer();
 		}
 
 		ShapeRecognizerResult* result = reco->recognizePatterns(stroke);
 
-		if (result)
-		{
+        if (result) {
 			strokeRecognizerDetected(result, layer);
 
 			// Full repaint is done anyway
@@ -223,8 +191,7 @@ void StrokeHandler::onButtonReleaseEvent(const PositionInputData& pos)
 		}
 	}
 
-	if (stroke->getFill() != -1 && stroke->getToolType() == STROKE_TOOL_HIGHLIGHTER)
-	{
+    if (stroke->getFill() != -1 && stroke->getToolType() == STROKE_TOOL_HIGHLIGHTER) {
 		// The stroke is not filled on drawing time
 		// If the stroke has fill values, it needs to be re-rendered
 		// else the fill will not be visible.
@@ -236,16 +203,14 @@ void StrokeHandler::onButtonReleaseEvent(const PositionInputData& pos)
 	page->fireElementChanged(stroke);
 
 	// Manually force the rendering of the stroke, if no motion event occurred inbetween, that would rerender the page.
-	if (stroke->getPointCount() == 2)
-	{
+    if (stroke->getPointCount() == 2) {
 		this->redrawable->rerenderElement(stroke);
 	}
 
 	stroke = nullptr;
 }
 
-void StrokeHandler::strokeRecognizerDetected(ShapeRecognizerResult* result, Layer* layer)
-{
+void StrokeHandler::strokeRecognizerDetected(ShapeRecognizerResult* result, Layer* layer) {
 	Stroke* recognized = result->getRecognized();
 	recognized->setWidth(stroke->hasPressure() ? stroke->getAvgPressure() : stroke->getWidth());
 
@@ -263,8 +228,7 @@ void StrokeHandler::strokeRecognizerDetected(ShapeRecognizerResult* result, Laye
 	range.addPoint(stroke->getX(), stroke->getY());
 	range.addPoint(stroke->getX() + stroke->getElementWidth(), stroke->getY() + stroke->getElementHeight());
 
-	for (Stroke* s: *result->getSources())
-	{
+    for (Stroke* s: *result->getSources()) {
 		layer->removeElement(s, false);
 
 		locRecUndo.addSourceElement(s);
@@ -279,8 +243,7 @@ void StrokeHandler::strokeRecognizerDetected(ShapeRecognizerResult* result, Laye
 	delete result;
 }
 
-void StrokeHandler::onButtonPressEvent(const PositionInputData& pos)
-{
+void StrokeHandler::onButtonPressEvent(const PositionInputData& pos) {
 	destroySurface();
 
 	double zoom = xournal->getZoom();
@@ -304,8 +267,7 @@ void StrokeHandler::onButtonPressEvent(const PositionInputData& pos)
 
 	cairo_scale(crMask, zoom * dpiScaleFactor, zoom * dpiScaleFactor);
 
-	if (!stroke)
-	{
+    if (!stroke) {
 		this->buttonDownPoint.x = pos.x / zoom;
 		this->buttonDownPoint.y = pos.y / zoom;
 
@@ -315,10 +277,8 @@ void StrokeHandler::onButtonPressEvent(const PositionInputData& pos)
 	this->startStrokeTime = pos.timestamp;
 }
 
-void StrokeHandler::destroySurface()
-{
-	if (surfMask || crMask)
-	{
+void StrokeHandler::destroySurface() {
+    if (surfMask || crMask) {
 		cairo_destroy(crMask);
 		cairo_surface_destroy(surfMask);
 		surfMask = nullptr;
@@ -326,10 +286,8 @@ void StrokeHandler::destroySurface()
 	}
 }
 
-void StrokeHandler::resetShapeRecognizer()
-{
-	if (reco)
-	{
+void StrokeHandler::resetShapeRecognizer() {
+    if (reco) {
 		delete reco;
 		reco = nullptr;
 	}

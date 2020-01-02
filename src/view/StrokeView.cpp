@@ -1,47 +1,35 @@
 #include "StrokeView.h"
-#include "DocumentView.h"
 
-#include "model/eraser/EraseableStroke.h"
 #include "model/Stroke.h"
+#include "model/eraser/EraseableStroke.h"
 #include "util/LoopUtil.h"
 
-StrokeView::StrokeView(cairo_t* cr, Stroke* s, int startPoint, double scaleFactor, bool noAlpha)
- : cr(cr),
-   s(s),
-   startPoint(startPoint),
-   scaleFactor(scaleFactor),
-   noAlpha(noAlpha)
-{
-}
+#include "DocumentView.h"
+
+StrokeView::StrokeView(cairo_t* cr, Stroke* s, int startPoint, double scaleFactor, bool noAlpha):
+        cr(cr), s(s), startPoint(startPoint), scaleFactor(scaleFactor), noAlpha(noAlpha) {}
 
 
-void StrokeView::drawFillStroke()
-{
+void StrokeView::drawFillStroke() {
 	for_first_then_each(
-	        s->getPointVector(),
-	        [this](auto const& first) { cairo_move_to(this->cr, first.x, first.y); },
+            s->getPointVector(), [this](auto const& first) { cairo_move_to(this->cr, first.x, first.y); },
 	        [this](auto const& other) { cairo_line_to(this->cr, other.x, other.y); });
 
 	cairo_fill(cr);
 }
 
-void StrokeView::applyDashed(double offset)
-{
+void StrokeView::applyDashed(double offset) {
 	const double* dashes = nullptr;
 	int dashCount = 0;
-	if (s->getLineStyle().getDashes(dashes, dashCount))
-	{
+    if (s->getLineStyle().getDashes(dashes, dashCount)) {
 		cairo_set_dash(cr, dashes, dashCount, offset);
-	}
-	else
-	{
+    } else {
 		// Disable dash
 		cairo_set_dash(cr, nullptr, 0, 0);
 	}
 }
 
-void StrokeView::drawEraseableStroke(cairo_t* cr, Stroke* s)
-{
+void StrokeView::drawEraseableStroke(cairo_t* cr, Stroke* s) {
 	EraseableStroke* e = s->getEraseable();
 	e->draw(cr);
 }
@@ -50,13 +38,11 @@ void StrokeView::drawEraseableStroke(cairo_t* cr, Stroke* s)
  * Change cairo source, used to draw hilighter transparent,
  * but only if not currently drawing and so on (yes, complicated)
  */
-void StrokeView::changeCairoSource(bool markAudioStroke)
-{
+void StrokeView::changeCairoSource(bool markAudioStroke) {
 	///////////////////////////////////////////////////////
 	// Fill stroke
 	///////////////////////////////////////////////////////
-	if (s->getFill() != -1 && s->getToolType() != STROKE_TOOL_HIGHLIGHTER)
-	{
+    if (s->getFill() != -1 && s->getToolType() != STROKE_TOOL_HIGHLIGHTER) {
 		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
 		// Set the color and transparency
@@ -66,17 +52,15 @@ void StrokeView::changeCairoSource(bool markAudioStroke)
 	}
 
 
-	if (s->getToolType() == STROKE_TOOL_HIGHLIGHTER ||
-		(s->getAudioFilename().length() == 0 && markAudioStroke))
-	{
-		// TODO: have the drawing logic set per stroke?
-		cairo_set_operator(cr, s->getStrokeOperator());
-		// Set the color
-		DocumentView::applyColor(cr, s, 120);
-	}
-	else
-	{
-
+    if (s->getToolType() == STROKE_TOOL_HIGHLIGHTER || (s->getAudioFilename().length() == 0 && markAudioStroke)) {
+        if (s->getToolType() == STROKE_TOOL_HIGHLIGHTER) {
+            cairo_set_operator(cr, CAIRO_OPERATOR_MULTIPLY);
+        } else {
+            cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+        }
+        // Set the color
+        DocumentView::applyColor(cr, s, 120);
+    } else {
 		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 		// Set the color
 		DocumentView::applyColor(cr, s);
@@ -86,13 +70,11 @@ void StrokeView::changeCairoSource(bool markAudioStroke)
 /**
  * No pressure sensitivity, one line is drawn
  */
-void StrokeView::drawNoPressure()
-{
+void StrokeView::drawNoPressure() {
 	double width = s->getWidth();
 
 	bool group = false;
-	if (s->getFill() != -1 && s->getToolType() == STROKE_TOOL_HIGHLIGHTER)
-	{
+    if (s->getFill() != -1 && s->getToolType() == STROKE_TOOL_HIGHLIGHTER) {
 		cairo_push_group(cr);
 		// Do not apply the alpha here, else the border and the fill
 		// are visible instead of one homogeneous area
@@ -106,22 +88,17 @@ void StrokeView::drawNoPressure()
 	applyDashed(0);
 
 	for_first_then_each(
-	        s->getPointVector(),
-	        [this](auto const& first) { cairo_move_to(cr, first.x, first.y); },
+            s->getPointVector(), [this](auto const& first) { cairo_move_to(cr, first.x, first.y); },
 	        [this](auto const& other) { cairo_line_to(cr, other.x, other.y); });
 	cairo_stroke(cr);
 
-	if (group)
-	{
+    if (group) {
 		cairo_pop_group_to_source(cr);
 
-		if (noAlpha)
-		{
+        if (noAlpha) {
 			// Currently drawing -> transparent applied on blitting
 			cairo_paint(cr);
-		}
-		else
-		{
+        } else {
 			cairo_paint_with_alpha(cr, s->getFill() / 255.0);
 		}
 	}
@@ -131,13 +108,11 @@ void StrokeView::drawNoPressure()
  * Draw a stroke with pressure, for this multiple
  * lines with different widths needs to be drawn
  */
-void StrokeView::drawWithPressure()
-{
+void StrokeView::drawWithPressure() {
 	double dashOffset = 0;
 
 	for (auto p1i = begin(s->getPointVector()), p2i = std::next(p1i), endi = end(s->getPointVector());
-	     p1i != endi && p2i != endi; ++p1i, ++p2i)
-	{
+         p1i != endi && p2i != endi; ++p1i, ++p2i) {
 		auto width = p1i->z != Point::NO_PRESSURE ? p1i->z : s->getWidth();
 		cairo_set_line_width(cr, width * scaleFactor);
 		applyDashed(dashOffset);
@@ -148,25 +123,20 @@ void StrokeView::drawWithPressure()
 	}
 }
 
-void StrokeView::paint(bool dontRenderEditingStroke)
-{
+void StrokeView::paint(bool dontRenderEditingStroke) {
 	cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 	cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
 
 	// don't render eraseable for previews
-	if (s->getEraseable() && !dontRenderEditingStroke)
-	{
+    if (s->getEraseable() && !dontRenderEditingStroke) {
 		drawEraseableStroke(cr, s);
 		return;
 	}
 
 	// No pressure sensitivity, easy draw a line...
-	if (!s->hasPressure() || s->getToolType() == STROKE_TOOL_HIGHLIGHTER)
-	{
+    if (!s->hasPressure() || s->getToolType() == STROKE_TOOL_HIGHLIGHTER) {
 		drawNoPressure();
-	}
-	else
-	{
+    } else {
 		drawWithPressure();
 	}
 }

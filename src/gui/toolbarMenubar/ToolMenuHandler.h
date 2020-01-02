@@ -11,11 +11,12 @@
 
 #pragma once
 
-#include "ColorToolItem.h"
-#include "MenuItem.h"
+#include <gtk/gtk.h>
+
 #include "control/Actions.h"
 
-#include <gtk/gtk.h>
+#include "ColorToolItem.h"
+#include "MenuItem.h"
 
 class AbstractToolItem;
 class FontButton;
@@ -33,8 +34,7 @@ class ZoomControl;
 class Control;
 class PageBackgroundChangeController;
 
-class ToolMenuHandler
-{
+class ToolMenuHandler {
 public:
 	ToolMenuHandler(Control* control, GladeGui* gui, GtkWindow* parent);
 	virtual ~ToolMenuHandler();
@@ -81,7 +81,8 @@ private:
 	void addToolItem(AbstractToolItem* it);
 
 	static void signalConnectCallback(GtkBuilder* builder, GObject* object, const gchar* signalName,
-				const gchar* handlerName, GObject* connectObject, GConnectFlags flags, ToolMenuHandler* self);
+                                      const gchar* handlerName, GObject* connectObject, GConnectFlags flags,
+                                      ToolMenuHandler* self);
 	void initPenToolItem();
 	void initEraserToolItem();
 	void initHilighterToolItem();

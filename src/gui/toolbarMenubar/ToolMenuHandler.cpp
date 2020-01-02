@@ -1,13 +1,9 @@
 #include "ToolMenuHandler.h"
 
-#include "FontButton.h"
-#include "MenuItem.h"
-#include "ToolButton.h"
-#include "ToolDrawCombocontrol.h"
-#include "ToolSelectCombocontrol.h"
-#include "ToolPageLayer.h"
-#include "ToolPageSpinner.h"
-#include "ToolZoomSlider.h"
+#include <utility>
+
+#include <config-features.h>
+#include <config.h>
 
 #include "control/Actions.h"
 #include "control/Control.h"
@@ -16,16 +12,18 @@
 #include "model/ToolbarData.h"
 #include "model/ToolbarModel.h"
 
-#include <StringUtils.h>
+#include "FontButton.h"
+#include "MenuItem.h"
+#include "StringUtils.h"
+#include "ToolButton.h"
+#include "ToolDrawCombocontrol.h"
+#include "ToolPageLayer.h"
+#include "ToolPageSpinner.h"
+#include "ToolSelectCombocontrol.h"
+#include "ToolZoomSlider.h"
+#include "i18n.h"
 
-#include <config.h>
-#include <config-features.h>
-#include <i18n.h>
-
-#include <utility>
-
-ToolMenuHandler::ToolMenuHandler(Control* control, GladeGui* gui, GtkWindow* parent)
-{
+ToolMenuHandler::ToolMenuHandler(Control* control, GladeGui* gui, GtkWindow* parent) {
 	this->parent = parent;
 	this->control = control;
 	this->listener = control;
@@ -44,8 +42,7 @@ ToolMenuHandler::ToolMenuHandler(Control* control, GladeGui* gui, GtkWindow* par
 	initToolItems();
 }
 
-ToolMenuHandler::~ToolMenuHandler()
-{
+ToolMenuHandler::~ToolMenuHandler() {
 	delete this->tbModel;
 	this->tbModel = nullptr;
 
@@ -55,39 +52,32 @@ ToolMenuHandler::~ToolMenuHandler()
 	// Owned by control
 	this->newPageType = nullptr;
 
-	for (MenuItem* it : this->menuItems)
-	{
+    for (MenuItem* it: this->menuItems) {
 		delete it;
 		it = nullptr;
 	}
 
 	freeDynamicToolbarItems();
 
-	for (AbstractToolItem* it : this->toolItems)
-	{
+    for (AbstractToolItem* it: this->toolItems) {
 		delete it;
 		it = nullptr;
 	}
 }
 
-void ToolMenuHandler::freeDynamicToolbarItems()
-{
-	for (AbstractToolItem* it : this->toolItems)
-	{
+void ToolMenuHandler::freeDynamicToolbarItems() {
+    for (AbstractToolItem* it: this->toolItems) {
 		it->setUsed(false);
 	}
 
-	for (ColorToolItem* it : this->toolbarColorItems)
-	{
+    for (ColorToolItem* it: this->toolbarColorItems) {
 		delete it;
 	}
 	this->toolbarColorItems.clear();
 }
 
-void ToolMenuHandler::unloadToolbar(GtkWidget* toolbar)
-{
-	for (int i = gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)) - 1; i >= 0; i--)
-	{
+void ToolMenuHandler::unloadToolbar(GtkWidget* toolbar) {
+    for (int i = gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)) - 1; i >= 0; i--) {
 		GtkToolItem* tbItem = gtk_toolbar_get_nth_item(GTK_TOOLBAR(toolbar), i);
 		gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(tbItem));
 	}
@@ -95,33 +85,26 @@ void ToolMenuHandler::unloadToolbar(GtkWidget* toolbar)
 	gtk_widget_hide(toolbar);
 }
 
-void ToolMenuHandler::load(ToolbarData* d, GtkWidget* toolbar, const char* toolbarName, bool horizontal)
-{
+void ToolMenuHandler::load(ToolbarData* d, GtkWidget* toolbar, const char* toolbarName, bool horizontal) {
 	int count = 0;
 
-	for (ToolbarEntry* e : d->contents)
-	{
-		if (e->getName() == toolbarName)
-		{
-			for (ToolbarItem* dataItem : e->getItems())
-			{
+    for (ToolbarEntry* e: d->contents) {
+        if (e->getName() == toolbarName) {
+            for (ToolbarItem* dataItem: e->getItems()) {
 				string name = dataItem->getName();
 
 				// recognize previous name, V1.07 (Jan 2019) and earlier.
-				if (name == "TWO_PAGES")
-				{
+                if (name == "TWO_PAGES") {
 					name = "PAIRED_PAGES";
 				}
 
 				// recognize previous name, V1.08 (Feb 2019) and earlier.
-				if (name == "RECSTOP")
-				{
+                if (name == "RECSTOP") {
 					name = "AUDIO_RECORDING";
 				}
 				
 
-				if (name == "SEPARATOR")
-				{
+                if (name == "SEPARATOR") {
 					GtkToolItem* it = gtk_separator_tool_item_new();
 					gtk_widget_show(GTK_WIDGET(it));
 					gtk_toolbar_insert(GTK_TOOLBAR(toolbar), it, -1);
@@ -131,8 +114,7 @@ void ToolMenuHandler::load(ToolbarData* d, GtkWidget* toolbar, const char* toolb
 					continue;
 				}
 
-				if (name == "SPACER")
-				{
+                if (name == "SPACER") {
 					GtkToolItem* toolItem = gtk_separator_tool_item_new();
 					gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(toolItem), false);
 					gtk_tool_item_set_expand(toolItem, true);
@@ -143,11 +125,9 @@ void ToolMenuHandler::load(ToolbarData* d, GtkWidget* toolbar, const char* toolb
 
 					continue;
 				}
-				if (StringUtils::startsWith(name, "COLOR(") && name.length() == 15)
-				{
+                if (StringUtils::startsWith(name, "COLOR(") && name.length() == 15) {
 					string color = name.substr(6, 8);
-					if (!StringUtils::startsWith(color, "0x"))
-					{
+                    if (!StringUtils::startsWith(color, "0x")) {
 						g_warning("Toolbar:COLOR(...) has to start with 0x, get color: %s", color.c_str());
 						continue;
 					}
@@ -169,12 +149,9 @@ void ToolMenuHandler::load(ToolbarData* d, GtkWidget* toolbar, const char* toolb
 				}
 
 				bool found = false;
-				for (AbstractToolItem* item : this->toolItems)
-				{
-					if (name == item->getId())
-					{
-						if (item->isUsed())
-						{
+                for (AbstractToolItem* item: this->toolItems) {
+                    if (name == item->getId()) {
+                        if (item->isUsed()) {
 							g_warning("You can use the toolbar item \"%s\" only once!", item->getId().c_str());
 							found = true;
 							continue;
@@ -192,8 +169,7 @@ void ToolMenuHandler::load(ToolbarData* d, GtkWidget* toolbar, const char* toolb
 						break;
 					}
 				}
-				if (!found)
-				{
+                if (!found) {
 					g_warning("Toolbar item \"%s\" not found!", name.c_str());
 				}
 			}
@@ -202,23 +178,17 @@ void ToolMenuHandler::load(ToolbarData* d, GtkWidget* toolbar, const char* toolb
 		}
 	}
 
-	if (count == 0)
-	{
+    if (count == 0) {
 		gtk_widget_hide(toolbar);
-	}
-	else
-	{
+    } else {
 		gtk_widget_show(toolbar);
 	}
 }
 
-void ToolMenuHandler::removeColorToolItem(AbstractToolItem* it)
-{
+void ToolMenuHandler::removeColorToolItem(AbstractToolItem* it) {
 	g_return_if_fail(it != nullptr);
-	for (unsigned int i = 0; i < this->toolbarColorItems.size(); i++)
-	{
-		if (this->toolbarColorItems[i] == it)
-		{
+    for (unsigned int i = 0; i < this->toolbarColorItems.size(); i++) {
+        if (this->toolbarColorItems[i] == it) {
 			this->toolbarColorItems.erase(this->toolbarColorItems.begin() + i);
 			break;
 		}
@@ -226,26 +196,21 @@ void ToolMenuHandler::removeColorToolItem(AbstractToolItem* it)
 	delete dynamic_cast<ColorToolItem*>(it);
 }
 
-void ToolMenuHandler::addColorToolItem(AbstractToolItem* it)
-{
+void ToolMenuHandler::addColorToolItem(AbstractToolItem* it) {
 	g_return_if_fail(it != nullptr);
 	this->toolbarColorItems.push_back(dynamic_cast<ColorToolItem*>(it));
 }
 
-void ToolMenuHandler::setTmpDisabled(bool disabled)
-{
-	for (AbstractToolItem* it : this->toolItems)
-	{
+void ToolMenuHandler::setTmpDisabled(bool disabled) {
+    for (AbstractToolItem* it: this->toolItems) {
 		it->setTmpDisabled(disabled);
 	}
 
-	for (MenuItem* it : this->menuItems)
-	{
+    for (MenuItem* it: this->menuItems) {
 		it->setTmpDisabled(disabled);
 	}
 
-	for (ColorToolItem* it : this->toolbarColorItems)
-	{
+    for (ColorToolItem* it: this->toolbarColorItems) {
 		it->setTmpDisabled(disabled);
 	}
 
@@ -253,43 +218,38 @@ void ToolMenuHandler::setTmpDisabled(bool disabled)
 	gtk_widget_set_sensitive(menuViewSidebarVisible, !disabled);
 }
 
-void ToolMenuHandler::addToolItem(AbstractToolItem* it)
-{
-	this->toolItems.push_back(it);
-}
+void ToolMenuHandler::addToolItem(AbstractToolItem* it) { this->toolItems.push_back(it); }
 
-void ToolMenuHandler::registerMenupoint(GtkWidget* widget, ActionType type, ActionGroup group)
-{
+void ToolMenuHandler::registerMenupoint(GtkWidget* widget, ActionType type, ActionGroup group) {
 	this->menuItems.push_back(new MenuItem(listener, widget, type, group));
 }
 
-void ToolMenuHandler::initPenToolItem()
-{
+void ToolMenuHandler::initPenToolItem() {
 	auto* tbPen = new ToolButton(listener, "PEN", ACTION_TOOL_PEN, GROUP_TOOL, true, "tool_pencil", _("Pen"));
 
-	registerMenupoint(tbPen->registerPopupMenuEntry(_("standard"), "line-style-plain"),
-			ACTION_TOOL_LINE_STYLE_PLAIN, GROUP_LINE_STYLE);
+    registerMenupoint(tbPen->registerPopupMenuEntry(_("standard"), "line-style-plain"), ACTION_TOOL_LINE_STYLE_PLAIN,
+                      GROUP_LINE_STYLE);
 
-	registerMenupoint(tbPen->registerPopupMenuEntry(_("dashed"), "line-style-dash"),
-			ACTION_TOOL_LINE_STYLE_DASH, GROUP_LINE_STYLE);
+    registerMenupoint(tbPen->registerPopupMenuEntry(_("dashed"), "line-style-dash"), ACTION_TOOL_LINE_STYLE_DASH,
+                      GROUP_LINE_STYLE);
 
 	registerMenupoint(tbPen->registerPopupMenuEntry(_("dash-/ dotted"), "line-style-dash-dot"),
 	                  ACTION_TOOL_LINE_STYLE_DASH_DOT, GROUP_LINE_STYLE);
 
-	registerMenupoint(tbPen->registerPopupMenuEntry(_("dotted"), "line-style-dot"),
-			ACTION_TOOL_LINE_STYLE_DOT, GROUP_LINE_STYLE);
+    registerMenupoint(tbPen->registerPopupMenuEntry(_("dotted"), "line-style-dot"), ACTION_TOOL_LINE_STYLE_DOT,
+                      GROUP_LINE_STYLE);
 
 	addToolItem(tbPen);
 }
 
-void ToolMenuHandler::initEraserToolItem()
-{
+void ToolMenuHandler::initEraserToolItem() {
 	auto* tbEraser =
 	        new ToolButton(listener, "ERASER", ACTION_TOOL_ERASER, GROUP_TOOL, true, "tool_eraser", _("Eraser"));
 
 	registerMenupoint(tbEraser->registerPopupMenuEntry(_("standard")), ACTION_TOOL_ERASER_STANDARD, GROUP_ERASER_MODE);
 	registerMenupoint(tbEraser->registerPopupMenuEntry(_("whiteout")), ACTION_TOOL_ERASER_WHITEOUT, GROUP_ERASER_MODE);
-	registerMenupoint(tbEraser->registerPopupMenuEntry(_("delete stroke")), ACTION_TOOL_ERASER_DELETE_STROKE, GROUP_ERASER_MODE);
+    registerMenupoint(tbEraser->registerPopupMenuEntry(_("delete stroke")), ACTION_TOOL_ERASER_DELETE_STROKE,
+                      GROUP_ERASER_MODE);
 
 	addToolItem(tbEraser);
 }
@@ -306,14 +266,13 @@ void ToolMenuHandler::initHilighterToolItem()
 }
 
 void ToolMenuHandler::signalConnectCallback(GtkBuilder* builder, GObject* object, const gchar* signalName,
-		const gchar* handlerName, GObject* connectObject, GConnectFlags flags, ToolMenuHandler* self)
-{
+                                            const gchar* handlerName, GObject* connectObject, GConnectFlags flags,
+                                            ToolMenuHandler* self) {
 	string actionName = handlerName;
 	string groupName{};
 
 	size_t pos = actionName.find(':');
-	if (pos != string::npos)
-	{
+    if (pos != string::npos) {
 		groupName = actionName.substr(pos + 1);
 		actionName = actionName.substr(0, pos);
 	}
@@ -321,23 +280,18 @@ void ToolMenuHandler::signalConnectCallback(GtkBuilder* builder, GObject* object
 	ActionGroup group = GROUP_NOGROUP;
 	ActionType action = ActionType_fromString(actionName);
 
-	if (action == ACTION_NONE)
-	{
+    if (action == ACTION_NONE) {
 		g_error("Unknown action name from glade file: «%s» / «%s»", signalName, handlerName);
 		return;
 	}
 
-	if (!groupName.empty())
-	{
+    if (!groupName.empty()) {
 		group = ActionGroup_fromString(groupName);
 	}
 
-	if (GTK_IS_MENU_ITEM(object))
-	{
-		for (AbstractToolItem* it : self->toolItems)
-		{
-			if (it->getActionType() == action)
-			{
+    if (GTK_IS_MENU_ITEM(object)) {
+        for (AbstractToolItem* it: self->toolItems) {
+            if (it->getActionType() == action) {
 				// There is already a toolbar item -> attach menu to it
 				it->setMenuItem(GTK_WIDGET(object));
 				return;
@@ -346,25 +300,24 @@ void ToolMenuHandler::signalConnectCallback(GtkBuilder* builder, GObject* object
 
 		// There is no toolbar item -> register the menu only
 		self->registerMenupoint(GTK_WIDGET(object), action, group);
-	}
-	else
-	{
+    } else {
 		g_error("Unsupported signal handler from glade file: «%s» / «%s»", signalName, handlerName);
 	}
 }
 
 // Use GTK Stock icon
-#define ADD_STOCK_ITEM(name, action, stockIcon, text) addToolItem(new ToolButton(listener, name, action, stockIcon, text))
+#define ADD_STOCK_ITEM(name, action, stockIcon, text) \
+    addToolItem(new ToolButton(listener, name, action, stockIcon, text))
 
 // Use Custom loading Icon
 #define ADD_CUSTOM_ITEM(name, action, icon, text) addToolItem(new ToolButton(listener, name, action, icon, text))
 
 // Use Custom loading Icon, toggle item
 // switchOnly: You can select pen, eraser etc. but you cannot unselect pen.
-#define ADD_CUSTOM_ITEM_TGL(name, action, group, switchOnly, icon, text) addToolItem(new ToolButton(listener, name, action, group, switchOnly, icon, text))
+#define ADD_CUSTOM_ITEM_TGL(name, action, group, switchOnly, icon, text) \
+    addToolItem(new ToolButton(listener, name, action, group, switchOnly, icon, text))
 
-void ToolMenuHandler::initToolItems()
-{
+void ToolMenuHandler::initToolItems() {
 	// Items ordered by menu, if possible.
 	// There are some entries which are not available in the menu, like the Zoom slider
 	// All menu items without tool icon are not listed here - they are connected by Glade Signals
@@ -394,14 +347,18 @@ void ToolMenuHandler::initToolItems()
 	ADD_STOCK_ITEM("DELETE", ACTION_DELETE, "edit-delete", _("Delete"));
 
 	// Icon snapping.svg made by www.freepik.com from www.flaticon.com
-	ADD_CUSTOM_ITEM_TGL("ROTATION_SNAPPING", ACTION_ROTATION_SNAPPING, GROUP_SNAPPING, false, "snapping", _("Rotation Snapping"));
-	ADD_CUSTOM_ITEM_TGL("GRID_SNAPPING", ACTION_GRID_SNAPPING, GROUP_GRID_SNAPPING, false, "grid_snapping", _("Grid Snapping"));
+    ADD_CUSTOM_ITEM_TGL("ROTATION_SNAPPING", ACTION_ROTATION_SNAPPING, GROUP_SNAPPING, false, "snapping",
+                        _("Rotation Snapping"));
+    ADD_CUSTOM_ITEM_TGL("GRID_SNAPPING", ACTION_GRID_SNAPPING, GROUP_GRID_SNAPPING, false, "grid_snapping",
+                        _("Grid Snapping"));
 
 	// Menu View
 	// ************************************************************************
 
-	ADD_CUSTOM_ITEM_TGL("PAIRED_PAGES", ACTION_VIEW_PAIRED_PAGES, GROUP_PAIRED_PAGES, false, "showpairedpages", _("Paired pages"));
-	ADD_CUSTOM_ITEM_TGL("PRESENTATION_MODE", ACTION_VIEW_PRESENTATION_MODE, GROUP_PRESENTATION_MODE, false, "presentation-mode", _("Presentation mode"));
+    ADD_CUSTOM_ITEM_TGL("PAIRED_PAGES", ACTION_VIEW_PAIRED_PAGES, GROUP_PAIRED_PAGES, false, "showpairedpages",
+                        _("Paired pages"));
+    ADD_CUSTOM_ITEM_TGL("PRESENTATION_MODE", ACTION_VIEW_PRESENTATION_MODE, GROUP_PRESENTATION_MODE, false,
+                        "presentation-mode", _("Presentation mode"));
 	ADD_CUSTOM_ITEM_TGL("FULLSCREEN", ACTION_FULLSCREEN, GROUP_FULLSCREEN, false, "fullscreen", _("Toggle fullscreen"));
 
 	ADD_STOCK_ITEM("MANAGE_TOOLBAR", ACTION_MANAGE_TOOLBAR, "manage_toolbars", _("Manage Toolbars"));
@@ -425,7 +382,8 @@ void ToolMenuHandler::initToolItems()
 	ADD_STOCK_ITEM("GOTO_NEXT_LAYER", ACTION_GOTO_NEXT_LAYER, "go-next", _("Go to next layer"));
 	ADD_STOCK_ITEM("GOTO_TOP_LAYER", ACTION_GOTO_TOP_LAYER, "go-top", _("Go to top layer"));
 
-	ADD_CUSTOM_ITEM("GOTO_NEXT_ANNOTATED_PAGE", ACTION_GOTO_NEXT_ANNOTATED_PAGE, "nextAnnotatedPage", _("Next annotated page"));
+    ADD_CUSTOM_ITEM("GOTO_NEXT_ANNOTATED_PAGE", ACTION_GOTO_NEXT_ANNOTATED_PAGE, "nextAnnotatedPage",
+                    _("Next annotated page"));
 
 	// Menu Journal
 	// ************************************************************************
@@ -437,7 +395,8 @@ void ToolMenuHandler::initToolItems()
 
 	ADD_CUSTOM_ITEM("DELETE_CURRENT_PAGE", ACTION_DELETE_PAGE, "delPage", _("Delete current page"));
 
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(gui->get("menuJournalPaperBackground")), pageBackgroundChangeController->getMenu());
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(gui->get("menuJournalPaperBackground")),
+                              pageBackgroundChangeController->getMenu());
 
 	// Menu Tool
 	// ************************************************************************
@@ -450,16 +409,20 @@ void ToolMenuHandler::initToolItems()
 	ADD_CUSTOM_ITEM("MATH_TEX", ACTION_TEX, "tool_math_tex", _("Add/Edit Tex"));
 	ADD_CUSTOM_ITEM_TGL("IMAGE", ACTION_TOOL_IMAGE, GROUP_TOOL, true, "tool_image", _("Image"));
 	ADD_CUSTOM_ITEM("DEFAULT_TOOL", ACTION_TOOL_DEFAULT, "default", _("Default Tool"));
-	ADD_CUSTOM_ITEM_TGL("SHAPE_RECOGNIZER", ACTION_SHAPE_RECOGNIZER, GROUP_RULER, false, "shape_recognizer", _("Shape Recognizer"));
+    ADD_CUSTOM_ITEM_TGL("SHAPE_RECOGNIZER", ACTION_SHAPE_RECOGNIZER, GROUP_RULER, false, "shape_recognizer",
+                        _("Shape Recognizer"));
 	ADD_CUSTOM_ITEM_TGL("DRAW_RECTANGLE", ACTION_TOOL_DRAW_RECT, GROUP_RULER, false, "rect-draw", _("Draw Rectangle"));
 	ADD_CUSTOM_ITEM_TGL("DRAW_CIRCLE", ACTION_TOOL_DRAW_CIRCLE, GROUP_RULER, false, "circle-draw", _("Draw Circle"));
 	ADD_CUSTOM_ITEM_TGL("DRAW_ARROW", ACTION_TOOL_DRAW_ARROW, GROUP_RULER, false, "arrow-draw", _("Draw Arrow"));
-	ADD_CUSTOM_ITEM_TGL("DRAW_COORDINATE_SYSTEM", ACTION_TOOL_DRAW_COORDINATE_SYSTEM, GROUP_RULER, false, "coordinate-system-draw", _("Draw coordinate system"));
+    ADD_CUSTOM_ITEM_TGL("DRAW_COORDINATE_SYSTEM", ACTION_TOOL_DRAW_COORDINATE_SYSTEM, GROUP_RULER, false,
+                        "coordinate-system-draw", _("Draw coordinate system"));
 	ADD_CUSTOM_ITEM_TGL("RULER", ACTION_RULER, GROUP_RULER, false, "ruler", _("Ruler"));
 
 	ADD_CUSTOM_ITEM_TGL("SELECT_REGION", ACTION_TOOL_SELECT_REGION, GROUP_TOOL, true, "lasso", _("Select Region"));
-	ADD_CUSTOM_ITEM_TGL("SELECT_RECTANGLE", ACTION_TOOL_SELECT_RECT, GROUP_TOOL, true, "rect-select", _("Select Rectangle"));
-	ADD_CUSTOM_ITEM_TGL("SELECT_OBJECT", ACTION_TOOL_SELECT_OBJECT, GROUP_TOOL, true, "object-select", _("Select Object"));
+    ADD_CUSTOM_ITEM_TGL("SELECT_RECTANGLE", ACTION_TOOL_SELECT_RECT, GROUP_TOOL, true, "rect-select",
+                        _("Select Rectangle"));
+    ADD_CUSTOM_ITEM_TGL("SELECT_OBJECT", ACTION_TOOL_SELECT_OBJECT, GROUP_TOOL, true, "object-select",
+                        _("Select Object"));
 	ADD_CUSTOM_ITEM_TGL("VERTICAL_SPACE", ACTION_TOOL_VERTICAL_SPACE, GROUP_TOOL, true, "stretch", _("Vertical Space"));
 	ADD_CUSTOM_ITEM_TGL("PLAY_OBJECT", ACTION_TOOL_PLAY_OBJECT, GROUP_TOOL, true, "object-play", _("Play Object"));
 	ADD_CUSTOM_ITEM_TGL("HAND", ACTION_TOOL_HAND, GROUP_TOOL, true, "hand", _("Hand"));
@@ -467,10 +430,13 @@ void ToolMenuHandler::initToolItems()
 	fontButton = new FontButton(listener, gui, "SELECT_FONT", ACTION_FONT_BUTTON_CHANGED, _("Select Font"));
 	addToolItem(fontButton);
 
-	ADD_CUSTOM_ITEM_TGL("AUDIO_RECORDING", ACTION_AUDIO_RECORD, GROUP_AUDIO, false, "audio-record", _("Record Audio / Stop Recording"));
-	audioPausePlaybackButton = new ToolButton(listener, "AUDIO_PAUSE_PLAYBACK", ACTION_AUDIO_PAUSE_PLAYBACK, GROUP_AUDIO, false, "audio-playback-pause", _("Pause / Play"));
+    ADD_CUSTOM_ITEM_TGL("AUDIO_RECORDING", ACTION_AUDIO_RECORD, GROUP_AUDIO, false, "audio-record",
+                        _("Record Audio / Stop Recording"));
+    audioPausePlaybackButton = new ToolButton(listener, "AUDIO_PAUSE_PLAYBACK", ACTION_AUDIO_PAUSE_PLAYBACK,
+                                              GROUP_AUDIO, false, "audio-playback-pause", _("Pause / Play"));
 	addToolItem(audioPausePlaybackButton);
-	audioStopPlaybackButton = new ToolButton(listener, "AUDIO_STOP_PLAYBACK", ACTION_AUDIO_STOP_PLAYBACK, "audio-playback-stop", _("Stop"));
+    audioStopPlaybackButton = new ToolButton(listener, "AUDIO_STOP_PLAYBACK", ACTION_AUDIO_STOP_PLAYBACK,
+                                             "audio-playback-stop", _("Stop"));
 	addToolItem(audioStopPlaybackButton);
 	audioSeekForwardsButton = new ToolButton(listener, "AUDIO_SEEK_FORWARDS", ACTION_AUDIO_SEEK_FORWARDS,
 	                                         "audio-seek-forwards", _("Forward"));
@@ -524,54 +490,31 @@ void ToolMenuHandler::initToolItems()
 	                                 this);
 }
 
-void ToolMenuHandler::setFontButtonFont(XojFont& font)
-{
-	this->fontButton->setFont(font);
-}
+void ToolMenuHandler::setFontButtonFont(XojFont& font) { this->fontButton->setFont(font); }
 
-auto ToolMenuHandler::getFontButtonFont() -> XojFont
-{
-	return this->fontButton->getFont();
-}
+auto ToolMenuHandler::getFontButtonFont() -> XojFont { return this->fontButton->getFont(); }
 
-void ToolMenuHandler::showFontSelectionDlg()
-{
-	this->fontButton->showFontDialog();
-}
+void ToolMenuHandler::showFontSelectionDlg() { this->fontButton->showFontDialog(); }
 
-void ToolMenuHandler::setUndoDescription(const string& description)
-{
+void ToolMenuHandler::setUndoDescription(const string& description) {
 	this->undoButton->updateDescription(description);
 	gtk_menu_item_set_label(GTK_MENU_ITEM(gui->get("menuEditUndo")), description.c_str());
 }
 
-void ToolMenuHandler::setRedoDescription(const string& description)
-{
+void ToolMenuHandler::setRedoDescription(const string& description) {
 	this->redoButton->updateDescription(description);
 	gtk_menu_item_set_label(GTK_MENU_ITEM(gui->get("menuEditRedo")), description.c_str());
 }
 
-auto ToolMenuHandler::getPageSpinner() -> SpinPageAdapter*
-{
-	return this->toolPageSpinner->getPageSpinner();
-}
+auto ToolMenuHandler::getPageSpinner() -> SpinPageAdapter* { return this->toolPageSpinner->getPageSpinner(); }
 
-void ToolMenuHandler::setPageText(const string& text)
-{
-	this->toolPageSpinner->setText(text);
-}
+void ToolMenuHandler::setPageText(const string& text) { this->toolPageSpinner->setText(text); }
 
-auto ToolMenuHandler::getModel() -> ToolbarModel*
-{
-	return this->tbModel;
-}
+auto ToolMenuHandler::getModel() -> ToolbarModel* { return this->tbModel; }
 
-auto ToolMenuHandler::isColorInUse(int color) -> bool
-{
-	for (ColorToolItem* it : this->toolbarColorItems)
-	{
-		if (it->getColor() == color)
-		{
+auto ToolMenuHandler::isColorInUse(int color) -> bool {
+    for (ColorToolItem* it: this->toolbarColorItems) {
+        if (it->getColor() == color) {
 			return true;
 		}
 	}
@@ -579,13 +522,9 @@ auto ToolMenuHandler::isColorInUse(int color) -> bool
 	return false;
 }
 
-auto ToolMenuHandler::getToolItems() -> vector<AbstractToolItem*>*
-{
-	return &this->toolItems;
-}
+auto ToolMenuHandler::getToolItems() -> vector<AbstractToolItem*>* { return &this->toolItems; }
 
-void ToolMenuHandler::disableAudioPlaybackButtons()
-{
+void ToolMenuHandler::disableAudioPlaybackButtons() {
 	setAudioPlaybackPaused(false);
 
 	this->audioPausePlaybackButton->enable(false);
@@ -599,8 +538,7 @@ void ToolMenuHandler::disableAudioPlaybackButtons()
 	gtk_widget_set_sensitive(GTK_WIDGET(gui->get("menuAudioSeekBackwards")), false);
 }
 
-void ToolMenuHandler::enableAudioPlaybackButtons()
-{
+void ToolMenuHandler::enableAudioPlaybackButtons() {
 	this->audioPausePlaybackButton->enable(true);
 	this->audioStopPlaybackButton->enable(true);
 	this->audioSeekBackwardsButton->enable(true);
@@ -612,8 +550,7 @@ void ToolMenuHandler::enableAudioPlaybackButtons()
 	gtk_widget_set_sensitive(GTK_WIDGET(gui->get("menuAudioSeekBackwards")), true);
 }
 
-void ToolMenuHandler::setAudioPlaybackPaused(bool paused)
-{
+void ToolMenuHandler::setAudioPlaybackPaused(bool paused) {
 	this->audioPausePlaybackButton->setActive(paused);
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gui->get("menuAudioPausePlayback")), paused);
 }

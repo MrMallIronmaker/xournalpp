@@ -25,8 +25,7 @@ php generateConvert.php
 *******************************************************************************
 ******************************************************************************/
 
-enum ActionGroup
-{
+enum ActionGroup {
 	GROUP_NOGROUP = 0,
 	GROUP_TOOL = 1,
 	GROUP_COLOR,
@@ -72,4 +71,3 @@ enum ActionGroup
 
 ActionGroup ActionGroup_fromString(const string& value);
 string ActionGroup_toString(ActionGroup value);
-

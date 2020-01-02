@@ -1,103 +1,64 @@
-#include <control/Control.h>
 #include "AudioPlayer.h"
 
-AudioPlayer::AudioPlayer(Control* control, Settings* settings) : control(control), settings(settings)
-{
-	this->audioQueue = new AudioQueue<float>();
-	this->portAudioConsumer = new PortAudioConsumer(this, this->audioQueue);
-	this->vorbisProducer = new VorbisProducer(this->audioQueue);
+#include "control/Control.h"
+
+AudioPlayer::~AudioPlayer() { this->stop(); }
+
+auto AudioPlayer::start(const string& filename, unsigned int timestamp) -> bool {
+    // Start the producer for reading the data
+    bool status = this->vorbisProducer->start(filename, timestamp);
+
+    // Start playing
+    if (status) {
+        status = status && this->play();
+    }
+
+    return status;
 }
 
-AudioPlayer::~AudioPlayer()
-{
-	this->stop();
+auto AudioPlayer::isPlaying() -> bool { return this->portAudioConsumer->isPlaying(); }
 
-	delete this->portAudioConsumer;
-	this->portAudioConsumer = nullptr;
+void AudioPlayer::pause() {
+    if (!this->portAudioConsumer->isPlaying()) {
+        return;
+    }
 
-	delete this->vorbisProducer;
-	this->vorbisProducer = nullptr;
-
-	delete this->audioQueue;
-	this->audioQueue = nullptr;
+    // Stop playing audio
+    this->portAudioConsumer->stopPlaying();
 }
 
-auto AudioPlayer::start(const string& filename, unsigned int timestamp) -> bool
-{
-	// Start the producer for reading the data
-	bool status = this->vorbisProducer->start(filename, timestamp);
+auto AudioPlayer::play() -> bool {
+    if (this->portAudioConsumer->isPlaying()) {
+        return false;
+    }
 
-	// Start playing
-	if (status)
-	{
-		status = status && this->play();
-	}
-
-	return status;
+    return this->portAudioConsumer->startPlaying();
 }
 
-auto AudioPlayer::isPlaying() -> bool
-{
-	return this->portAudioConsumer->isPlaying();
+void AudioPlayer::disableAudioPlaybackButtons() {
+    if (this->audioQueue->hasStreamEnded()) {
+        this->control.getWindow()->disableAudioPlaybackButtons();
+    }
 }
 
-void AudioPlayer::pause()
-{
-	if (!this->portAudioConsumer->isPlaying())
-	{
-		return;
-	}
+void AudioPlayer::stop() {
+    // Stop playing audio
+    this->portAudioConsumer->stopPlaying();
 
-	// Stop playing audio
-	this->portAudioConsumer->stopPlaying();
+    this->audioQueue->signalEndOfStream();
+
+    // Abort libsox
+    this->vorbisProducer->abort();
+
+    // Reset the queue for the next playback
+    this->audioQueue->reset();
 }
 
-auto AudioPlayer::play() -> bool
-{
-	if (this->portAudioConsumer->isPlaying())
-	{
-		return false;
-	}
-
-	return this->portAudioConsumer->startPlaying();
+void AudioPlayer::seek(int seconds) {
+    // set seek flag here in vorbisProducer
+    this->vorbisProducer->seek(seconds);
 }
 
-void AudioPlayer::disableAudioPlaybackButtons()
-{
-	if (this->audioQueue->hasStreamEnded())
-	{
-		this->control->getWindow()->disableAudioPlaybackButtons();
-	}
-}
+auto AudioPlayer::getOutputDevices() -> vector<DeviceInfo> { return this->portAudioConsumer->getOutputDevices(); }
 
-void AudioPlayer::stop()
-{
-	// Stop playing audio
-	this->portAudioConsumer->stopPlaying();
-
-	this->audioQueue->signalEndOfStream();
-
-	// Abort libsox
-	this->vorbisProducer->abort();
-
-	// Reset the queue for the next playback
-	this->audioQueue->reset();
-}
-
-void AudioPlayer::seek(int seconds)
-{
-	// set seek flag here in vorbisProducer
-	this->vorbisProducer->seek(seconds);
-}
-
-auto AudioPlayer::getOutputDevices() -> vector<DeviceInfo>
-{
-	std::list<DeviceInfo> deviceList = this->portAudioConsumer->getOutputDevices();
-	return vector<DeviceInfo>{std::make_move_iterator(std::begin(deviceList)),
-							  std::make_move_iterator(std::end(deviceList))};
-}
-
-auto AudioPlayer::getSettings() -> Settings*
-{
-	return this->settings;
-}
+auto AudioPlayer::getSettings() -> Settings& { return this->settings; }

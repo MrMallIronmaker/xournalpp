@@ -24,8 +24,7 @@ php generateConvert.php
 *******************************************************************************
 ******************************************************************************/
 
-enum ActionType
-{
+enum ActionType {
 	ACTION_NONE = 0,
 
 	// Menu file
@@ -61,7 +60,7 @@ enum ActionType
 	ACTION_GOTO_NEXT_ANNOTATED_PAGE,
 	ACTION_GOTO_PREVIOUS_ANNOTATED_PAGE,
 
-	//Menu Journal
+    // Menu Journal
 	ACTION_NEW_PAGE_BEFORE = 400,
 	ACTION_NEW_PAGE_AFTER,
 	ACTION_NEW_PAGE_AT_END,
@@ -213,4 +212,3 @@ enum ActionType
 
 ActionType ActionType_fromString(const string& value);
 string ActionType_toString(ActionType value);
-

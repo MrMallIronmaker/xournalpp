@@ -11,11 +11,13 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <string>
+#include <vector>
+
+#include "XournalType.h"
 
 
-enum ToolSize
-{
+enum ToolSize {
 	TOOL_SIZE_VERY_FINE = 0,
 	TOOL_SIZE_FINE,
 	TOOL_SIZE_MEDIUM,
@@ -28,8 +30,7 @@ string toolSizeToString(ToolSize size);
 ToolSize toolSizeFromString(const string& size);
 
 
-enum DrawingType
-{
+enum DrawingType {
 	/**
 	 * For config entry, don't change value
 	 */
@@ -51,8 +52,7 @@ DrawingType drawingTypeFromString(const string& type);
 
 
 // Has to be in the same order as in Action.h: ActionType!
-enum ToolType
-{
+enum ToolType {
 	TOOL_NONE 						= 0,
 
 	// First valid tool, often used starting Index 0
@@ -83,13 +83,7 @@ string toolTypeToString(ToolType type);
 ToolType toolTypeFromString(const string& type);
 
 
-enum EraserType
-{
-	ERASER_TYPE_NONE 				= 0,
-	ERASER_TYPE_DEFAULT,
-	ERASER_TYPE_WHITEOUT,
-	ERASER_TYPE_DELETE_STROKE
-};
+enum EraserType { ERASER_TYPE_NONE = 0, ERASER_TYPE_DEFAULT, ERASER_TYPE_WHITEOUT, ERASER_TYPE_DELETE_STROKE };
 string eraserTypeToString(EraserType type);
 EraserType eraserTypeFromString(const string& type);
 
@@ -103,8 +97,7 @@ string hilighterTypeToString(HilighterType type);
 HilighterType hilighterTypeFromString(const string& type);
 
 
-enum ToolCapabilities
-{
+enum ToolCapabilities {
 	TOOL_CAP_NONE					= 0,
 	TOOL_CAP_COLOR					= 1 << 0,
 	TOOL_CAP_SIZE					= 1 << 1,
@@ -117,4 +110,3 @@ enum ToolCapabilities
 	TOOL_CAP_COORDINATE_SYSTEM    	= 1 << 8,
 	TOOL_CAP_DASH_LINE				= 1 << 9,
 };
-

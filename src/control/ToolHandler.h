@@ -13,15 +13,17 @@
 
 #include <array>
 #include <memory>
-#include "Tool.h"
+#include <string>
+#include <vector>
+
 #include "settings/Settings.h"
 
-#include <XournalType.h>
+#include "Tool.h"
+#include "XournalType.h"
 
 class LastSelectedTool;
 
-class ToolListener
-{
+class ToolListener {
 public:
 	virtual void toolColorChanged(bool userSelection) = 0;
 	virtual void setCustomColorSelected() = 0;
@@ -35,8 +37,7 @@ public:
 
 class ActionHandler;
 
-class ToolHandler
-{
+class ToolHandler {
 public:
 	ToolHandler(ToolListener* listener, ActionHandler* actionHandler, Settings* settings);
 	virtual ~ToolHandler();
@@ -120,7 +121,8 @@ public:
 	const double* getToolThickness(ToolType type);
 
 	/**
-	 * Returns whether the current tool will create an element that may only reside on a single page even when the pointer moves to another
+     * Returns whether the current tool will create an element that may only reside on a single page even when the
+     * pointer moves to another
 	 * @return
 	 */
 	bool isSinglePageTool();

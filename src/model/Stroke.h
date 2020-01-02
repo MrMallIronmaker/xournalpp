@@ -12,19 +12,15 @@
 #pragma once
 
 #include "AudioElement.h"
-#include "Point.h"
-#include "LineStyle.h"
 #include "Element.h"
+#include "LineStyle.h"
+#include "Point.h"
 
-enum StrokeTool
-{
-	STROKE_TOOL_PEN, STROKE_TOOL_ERASER, STROKE_TOOL_HIGHLIGHTER
-};
+enum StrokeTool { STROKE_TOOL_PEN, STROKE_TOOL_ERASER, STROKE_TOOL_HIGHLIGHTER };
 
 class EraseableStroke;
 
-class Stroke : public AudioElement
-{
+class Stroke: public AudioElement {
 public:
 	Stroke();
 	Stroke(Stroke const&) = default;

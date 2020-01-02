@@ -11,46 +11,55 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <string>
+#include <vector>
+
+#include "gui/toolbarMenubar/ToolMenuHandler.h"
 #include "settings/Settings.h"
+#include "util/audio/AudioPlayer.h"
+#include "util/audio/AudioRecorder.h"
+
 #include "Control.h"
-#include <Path.h>
-#include <util/audio/AudioRecorder.h>
-#include <util/audio/AudioPlayer.h>
-#include <gui/toolbarMenubar/ToolMenuHandler.h>
+#include "Path.h"
+#include "XournalType.h"
 
-class AudioController
-{
+class AudioPlayer;
+
+class AudioController final {
 public:
-	AudioController(Settings* settings, Control* control);
-	virtual ~AudioController();
+    // Todo convert Pointers to reference (changes to control.cpp are neccessary)
+    AudioController(Settings* settings, Control* control): settings(*settings), control(*control) {}
 
-public:
-	bool startRecording();
-	bool stopRecording();
-	bool isRecording();
+    bool startRecording();
+    bool stopRecording();
+    bool isRecording();
 
-	bool isPlaying();
-	bool startPlayback(const string& filename, unsigned int timestamp);
-	void pausePlayback();
-	void continuePlayback();
-	void stopPlayback();
-	void seekForwards();
-	void seekBackwards();
+    bool isPlaying();
+    bool startPlayback(const string& filename, unsigned int timestamp);
+    void pausePlayback();
+    void continuePlayback();
+    void stopPlayback();
+    void seekForwards();
+    void seekBackwards();
 
-	string getAudioFilename();
-	Path getAudioFolder();
-	size_t getStartTime() const;
-	vector<DeviceInfo> getOutputDevices();
-	vector<DeviceInfo> getInputDevices();
-
-protected:
-	string audioFilename;
-	size_t timestamp = 0;
-	Settings* settings;
-	Control* control;
-	AudioRecorder* audioRecorder;
-	AudioPlayer* audioPlayer;
+    string const& getAudioFilename() const;
+    Path getAudioFolder() const;
+    size_t getStartTime() const;
+    vector<DeviceInfo> getOutputDevices() const;
+    vector<DeviceInfo> getInputDevices() const;
 
 private:
+    Settings& settings;
+    Control& control;
+
+    /**
+     * RAII initializer don't move below the portaudio::System::instance() calls in
+     * AudioRecorder and AudioPlayer
+     * */
+    portaudio::AutoSystem autoSys;
+    std::unique_ptr<AudioRecorder> audioRecorder = std::make_unique<AudioRecorder>(settings);
+    std::unique_ptr<AudioPlayer> audioPlayer = std::make_unique<AudioPlayer>(control, settings);
+
+    string audioFilename;
+    size_t timestamp = 0;
 };
