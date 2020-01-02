@@ -415,6 +415,16 @@ auto ActionType_fromString(const string& value) -> ActionType
 		return ACTION_TOOL_PEN_FILL_TRANSPARENCY;
 	}
 
+	if (value == "ACTION_TOOL_HILIGHTER_STANDARD")
+	{
+		return ACTION_TOOL_HILIGHTER_STANDARD;
+	}
+
+	if (value == "ACTION_TOOL_HILIGHTER_TRANSLUCENT")
+	{
+		return ACTION_TOOL_HILIGHTER_TRANSLUCENT;
+	}
+
 	if (value == "ACTION_TOOL_HILIGHTER_SIZE_VERY_FINE")
 	{
 		return ACTION_TOOL_HILIGHTER_SIZE_VERY_FINE;
@@ -1125,6 +1135,16 @@ auto ActionType_toString(ActionType value) -> string
 	if (value == ACTION_TOOL_PEN_FILL_TRANSPARENCY)
 	{
 		return "ACTION_TOOL_PEN_FILL_TRANSPARENCY";
+	}
+
+	if (value == ACTION_TOOL_HILIGHTER_STANDARD)
+	{
+		return "ACTION_TOOL_HILIGHTER_STANDARD";
+	}
+
+	if (value == ACTION_TOOL_HILIGHTER_TRANSLUCENT)
+	{
+		return "ACTION_TOOL_HILIGHTER_TRANSLUCENT";
 	}
 
 	if (value == ACTION_TOOL_HILIGHTER_SIZE_VERY_FINE)

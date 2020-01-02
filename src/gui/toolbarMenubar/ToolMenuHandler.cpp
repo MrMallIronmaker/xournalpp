@@ -294,6 +294,17 @@ void ToolMenuHandler::initEraserToolItem()
 	addToolItem(tbEraser);
 }
 
+void ToolMenuHandler::initHilighterToolItem()
+{
+	auto* tbHilighter =
+			new ToolButton(listener, "HILIGHTER", ACTION_TOOL_HILIGHTER, GROUP_TOOL, true, "tool_highlighter", _("Highlighter"));
+
+	registerMenupoint(tbHilighter->registerPopupMenuEntry(_("standard")), ACTION_TOOL_HILIGHTER_STANDARD, GROUP_HILIGHTER_MODE);
+	registerMenupoint(tbHilighter->registerPopupMenuEntry(_("translucent")), ACTION_TOOL_HILIGHTER_TRANSLUCENT, GROUP_HILIGHTER_MODE);
+
+	addToolItem(tbHilighter);
+}
+
 void ToolMenuHandler::signalConnectCallback(GtkBuilder* builder, GObject* object, const gchar* signalName,
 		const gchar* handlerName, GObject* connectObject, GConnectFlags flags, ToolMenuHandler* self)
 {
@@ -433,8 +444,7 @@ void ToolMenuHandler::initToolItems()
 
 	initPenToolItem();
 	initEraserToolItem();
-
-	ADD_CUSTOM_ITEM_TGL("HILIGHTER", ACTION_TOOL_HILIGHTER, GROUP_TOOL, true, "tool_highlighter", _("Highlighter"));
+	initHilighterToolItem();
 
 	ADD_CUSTOM_ITEM_TGL("TEXT", ACTION_TOOL_TEXT, GROUP_TOOL, true, "tool_text", _("Text"));
 	ADD_CUSTOM_ITEM("MATH_TEX", ACTION_TEX, "tool_math_tex", _("Add/Edit Tex"));

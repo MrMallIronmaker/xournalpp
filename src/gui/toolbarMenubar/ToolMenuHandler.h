@@ -84,6 +84,7 @@ private:
 				const gchar* handlerName, GObject* connectObject, GConnectFlags flags, ToolMenuHandler* self);
 	void initPenToolItem();
 	void initEraserToolItem();
+	void initHilighterToolItem();
 
 private:
 	vector<ColorToolItem*> toolbarColorItems;

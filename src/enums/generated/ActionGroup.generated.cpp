@@ -55,6 +55,11 @@ auto ActionGroup_fromString(const string& value) -> ActionGroup
 		return GROUP_PEN_FILL;
 	}
 
+	if (value == "GROUP_HILIGHTER_MODE")
+	{
+		return GROUP_HILIGHTER_MODE;
+	}
+
 	if (value == "GROUP_HILIGHTER_SIZE")
 	{
 		return GROUP_HILIGHTER_SIZE;
@@ -185,6 +190,11 @@ auto ActionGroup_toString(ActionGroup value) -> string
 	if (value == GROUP_PEN_FILL)
 	{
 		return "GROUP_PEN_FILL";
+	}
+
+	if (value == GROUP_HILIGHTER_MODE)
+	{
+		return "GROUP_HILIGHTER_MODE";
 	}
 
 	if (value == GROUP_HILIGHTER_SIZE)
