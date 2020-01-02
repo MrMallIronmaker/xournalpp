@@ -599,6 +599,12 @@ void Control::actionPerformed(ActionType type, ActionGroup group, GdkEvent* even
 		}
 		break;
 
+	case ACTION_TOOL_HILIGHTER_TRANSLUCENT:
+		if (enabled)
+		{
+			toolHandler->setHilighterType(HILIGHTER_TYPE_TRANSLUCENT);
+		}
+
 	case ACTION_TOOL_TEXT:
 		clearSelection();
 		if (enabled)

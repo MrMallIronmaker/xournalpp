@@ -69,6 +69,15 @@ void InputHandler::createStroke(Point p)
 	else if (h->getToolType() == TOOL_HILIGHTER)
 	{
 		stroke->setToolType(STROKE_TOOL_HIGHLIGHTER);
+		switch(h->getHilighterType()) {
+		case HILIGHTER_TYPE_TRANSLUCENT:
+			stroke->setStrokeOperator(CAIRO_OPERATOR_OVER);
+			break;
+		case HILIGHTER_TYPE_DEFAULT:
+		default:
+			stroke->setStrokeOperator(CAIRO_OPERATOR_MULTIPLY);
+			break;
+		}
 	}
 	else if (h->getToolType() == TOOL_ERASER)
 	{

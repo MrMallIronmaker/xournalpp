@@ -480,6 +480,15 @@ void Stroke::setEraseable(EraseableStroke* eraseable)
 	this->eraseable = eraseable;
 }
 
+cairo_operator_t Stroke::getStrokeOperator()
+{
+	return strokeOperator;
+}
+
+void Stroke::setStrokeOperator(cairo_operator_t co) {
+	strokeOperator = co;
+}
+
 void Stroke::debugPrint()
 {
 	g_message("%s", FC(FORMAT_STR("Stroke {1} / hasPressure() = {2}") % (uint64_t) this % this->hasPressure()));

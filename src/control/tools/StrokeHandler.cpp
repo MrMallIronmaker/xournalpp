@@ -43,7 +43,11 @@ void StrokeHandler::draw(cairo_t* cr)
 	}
 
 	DocumentView::applyColor(cr, stroke);
-	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+	if (stroke->getToolType() == STROKE_TOOL_HIGHLIGHTER && xournal->getControl()->getToolHandler()->getHilighterType() != HILIGHTER_TYPE_TRANSLUCENT) {
+		cairo_set_operator(cr, CAIRO_OPERATOR_MULTIPLY);
+	} else {
+		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+	}
 
 	cairo_mask_surface(cr, surfMask, 0, 0);
 }

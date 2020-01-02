@@ -69,12 +69,14 @@ void StrokeView::changeCairoSource(bool markAudioStroke)
 	if (s->getToolType() == STROKE_TOOL_HIGHLIGHTER ||
 		(s->getAudioFilename().length() == 0 && markAudioStroke))
 	{
-		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+		// TODO: have the drawing logic set per stroke?
+		cairo_set_operator(cr, s->getStrokeOperator());
 		// Set the color
 		DocumentView::applyColor(cr, s, 120);
 	}
 	else
 	{
+
 		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 		// Set the color
 		DocumentView::applyColor(cr, s);

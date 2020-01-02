@@ -103,6 +103,9 @@ public:
 	EraseableStroke* getEraseable();
 	void setEraseable(EraseableStroke* eraseable);
 
+	cairo_operator_t getStrokeOperator();
+	void setStrokeOperator(cairo_operator_t co);
+
 	void debugPrint();
 
 public:
@@ -128,6 +131,8 @@ private:
 	LineStyle lineStyle;
 
 	EraseableStroke* eraseable = nullptr;
+
+	cairo_operator_t strokeOperator = CAIRO_OPERATOR_OVER;
 
 	/**
 	 * Option to fill the shape:
